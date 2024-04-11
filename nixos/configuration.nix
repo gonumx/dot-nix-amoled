@@ -12,7 +12,16 @@
       systemd-boot.enable = true;
       efi.canTouchEfiVariables = true;
     };
-    kernelParams = [ "split_lock_detect=off" ];
+    kernelParams = [ "split_lock_detect=off" "intel-iommu=on" ];
+    kernelModules = [ "vfio_virqfd" "vfio_pci" "vfio_iommu_type1" "vfio" ];
+    postBootCommands = ''
+      DEVS="2188:0f:00.0 1aeb:0f:00.1"
+
+      for DEV in $DEVS; do
+        echo "vfio-pci" > /sys/bus/pci/devices/$DEV/driver_override
+      done
+      modprobe -i vfio-pci
+    '';
   };
 
   networking.hostName = "nixos"; # Define your hostname.
@@ -24,6 +33,16 @@
 
   # Enable networking
   networking.networkmanager.enable = true;
+
+  # Enable VMs
+  virtualisation = {
+    waydroid.enable = false;
+    libvirtd.enable = true;
+    libvirtd.qemu.ovmf.enable = true;
+  };
+
+  # Optimise storage
+  nix.optimise.automatic = true;
 
   # Configure how nix works
   nixpkgs.config.permittedInsecurePackages = [
@@ -51,6 +70,11 @@
     #LC_TIME = "el_GR.UTF-8";
   };
 
+  # Enable systemd services
+  systemd = {
+    network.enable = true;
+  };
+
   # Enable OpenGL
   hardware.opengl = {
     enable = true;
@@ -62,8 +86,7 @@
   services = {
     xserver = {
       enable = true;
-      layout = "us,ru";
-      xkbOptions = "grp:win_space_toggle";
+      layout = "us";
       displayManager.xpra.pulseaudio = true;
       videoDrivers = [ "nvidia" ];
       windowManager.i3 = {
@@ -115,12 +138,11 @@
   # Enable sound with pipewire.
   sound.enable = true;
   hardware.pulseaudio.enable = false;
-  security.rtkit.enable = true;
+  security.rtkit.enable = false;
   services.pipewire = {
     enable = true;
-    alsa.enable = true;
-
-    alsa.support32Bit = true;
+    alsa.enable = false;
+    alsa.support32Bit = false;
     pulse.enable = true;
     wireplumber.enable = true;
   };
@@ -160,9 +182,14 @@
   environment.systemPackages = with pkgs; [
     home-manager
   # apps
+    armcord
+    libqalculate
+    docker
     gnome.polari
     wget
+    lunar-client
     git
+    hyprshot
     vim
     google-chrome
     firefox
@@ -196,8 +223,6 @@
     starship
     blesh
     gnome.quadrapassel
-    quickemu
-    quickgui
     killall
     gimp
     fuzzel 
@@ -221,6 +246,10 @@
     gradience
     wpsoffice 
     cliphist
+    quickgui
+    quickemu
+    qemu
+    virt-manager
   ];
 
   # Programs
@@ -286,11 +315,11 @@
       enable = true;
       settings = {
 	colors.background = "#000000ff";
-	colors.text = "#f5ffffcc";
+	colors.text = "#f5ffffff";
 	colors.selection-text = "#000000ff";
-	colors.selection-match = "#f5ffffcc";
-	colors.match = "#f5ffffcc";
-	colors.selection = "#f5ffffcc";
+	colors.selection-match = "#f5ffffff";
+	colors.match = "#f5ffffff";
+	colors.selection = "#f5ffffff";
 	colors.border = "#555555ff";
 	border.radius = 10;
 	border.width = 2;
@@ -304,6 +333,8 @@
       enable = true;
       environment = { };
       keybindings = { };
+      font.name = "Fantasque Sans Mono";
+      font.size = 13;
       settings = {
         background_opacity = "1.7";
         enable_audio_bell = false;
@@ -479,7 +510,7 @@
       settings = [{
         "layer" = "top";
         "position" = "top";
-	"height" = 10;
+	"height" = 24;
 	"margin-top" = 8;
 	"margin-left" = 15;
 	"margin-right" = 15;
@@ -581,11 +612,8 @@
           outer = 0;
         };
         keybindings = {
-          "XF86AudioMute" = "exec amixer set Master toggle";
-          "XF86AudioLowerVolume" = "exec amixer set Master 3%-";
-          "XF86AudioRaiseVolume" = "exec amixer set Master 3%+";
-          "XF86MonBrightnessDown" = "exec brightnessctl set 3%-";
-          "XF86MonBrightnessUp" = "exec brightnessctl set 3%+";
+          "XF86AudioLowerVolume" = "exec kitty -e alsamixer";
+          "XF86AudioRaiseVolume" = "exec kitty -e alsamixer";
           "${modifier}+Return" = "exec kitty";
           "${modifier}+w" = "exec google-chrome-stable";
           "${modifier}+z" = "kill";
@@ -616,6 +644,13 @@
           "${modifier}+Shift+9" = "move container to workspace 9";
           "${modifier}+Shift+0" = "move container to workspace 10";
         };
+	startup = [
+          {
+            command = "xinit set-prop 10 296 -0.4";
+            always = true;
+            notification = false;
+          }
+        ];
       };
     };
 
