@@ -97,7 +97,7 @@
 	  i3blocks
 	];
       };
-      desktopManager.gnome.enable = true;
+      desktopManager.gnome.enable = false;
       displayManager.gdm.enable = true;
       displayManager.startx.enable = true;
       config = ''
@@ -136,12 +136,11 @@
   };
 
   # Enable sound with pipewire.
-  sound.enable = true;
   hardware.pulseaudio.enable = false;
-  security.rtkit.enable = false;
+  security.rtkit.enable = true;
   services.pipewire = {
     enable = true;
-    alsa.enable = false;
+    alsa.enable = true;
     alsa.support32Bit = false;
     pulse.enable = true;
     wireplumber.enable = true;
@@ -182,6 +181,8 @@
   environment.systemPackages = with pkgs; [
     home-manager
   # apps
+    alsa-utils
+    teams-for-linux
     armcord
     libqalculate
     docker
@@ -192,12 +193,14 @@
     hyprshot
     vim
     google-chrome
+    chromium
     firefox
     pavucontrol
     pamixer
     xdg-desktop-portal-hyprland
     waybar
     swaybg
+    satty
     grim
     slurp
     satty
@@ -210,7 +213,6 @@
     steam
     qpwgraph
     webcord
-    gnome.gnome-session
     xorg.xinit
     xorg.xauth
     r2modman
@@ -304,7 +306,7 @@
 	anchor = "top-right";
 	
 	backgroundColor = "#000000";
-	textColor = "#f5ffff";
+	textColor = "#d8dee9";
 	borderColor = "#555555";
         defaultTimeout = 4000;
 	progressColor = "over #433E4A";	
@@ -315,16 +317,16 @@
       enable = true;
       settings = {
 	colors.background = "#000000ff";
-	colors.text = "#f5ffffff";
+	colors.text = "#d8dee9ff";
 	colors.selection-text = "#000000ff";
-	colors.selection-match = "#f5ffffff";
-	colors.match = "#f5ffffff";
-	colors.selection = "#f5ffffff";
+	colors.selection-match = "#d8dee9ff";
+	colors.match = "#d8dee9ff";
+	colors.selection = "#d8dee9ff";
 	colors.border = "#555555ff";
 	border.radius = 10;
 	border.width = 2;
         main.width = 60;
-	main.font = "monospace:size=18";
+	main.font = "Fantasque Sans Mono:size=21";
 	main.prompt = "❯ ";
       };
     };
@@ -341,12 +343,12 @@
         confirm_os_window_close  = 0;
       };
       extraConfig = ''
-        foreground              #F5FFFF
+        foreground              #D8DEE9
         background              #000000
         selection_foreground    #D9E0EE
         selection_background    #262626
         
-        cursor                  #F5FFFF
+        cursor                  #D8DEE9
         cursor_text_color       #000000
         
         #: black
@@ -371,8 +373,8 @@
         color6  #A8E5E6
         color14 #A8E5E6
         #: white
-        color7  #F5FFFF
-        color15 #F5FFFF
+        color7  #D8DEE9
+        color15 #D8DEE9
       '';
      };
 
@@ -416,7 +418,7 @@
 	window#waybar {
 	    background-color: rgba(43, 48, 59, 0.0);
 	    border-bottom: 0px solid rgba(100, 114, 125, 0.0);
-	    color: #F5FFFF;
+	    color: #d8dee9;
 	    transition-property: background-color;
 	    transition-duration: .5s;
 	}
@@ -425,7 +427,7 @@
 	}
 	button {
 	    box-shadow: inset 0 -3px transparent;
-	    border: #F5FFFF;
+	    border: #d8dee9;
 	    border-radius: 4px;
 	}
 	button:hover {
@@ -435,14 +437,14 @@
 	#workspaces button {
 	    padding: 0 5px;
 	    background-color: transparent;
-	    color: #F5FFFF;
+	    color: #d8dee9;
 	}
 	#workspaces button:hover {
 	    background: rgba(0, 0, 0, 0.2);
 	}
 	#workspaces button.focused {
 	    background-color: #64727D;
-	    box-shadow: inset 0 -3px #F5FFFF;
+	    box-shadow: inset 0 -3px #d8dee9;
 	}
 	#workspaces button.urgent {
 	    background-color: #eb4d4b;
@@ -466,7 +468,7 @@
 	#language,
 	#mpd {
 	    padding: 0 10px;
-	    color: #F5FFFF;
+	    color: #d8dee9;
  	    border: 1px solid #555555;
 	    background-color: #000000;
 	}
@@ -479,7 +481,7 @@
 	}
 	#tray > .needs-attention {
 	    -gtk-icon-effect: highlight;
-	    background-color: #F5FFFF;
+	    background-color: #d8dee9;
 	    color: #000000;
 	}
 	#pulseaudio-slider slider {
@@ -500,7 +502,7 @@
 	#pulseaudio-slider highlight {
 	    min-width: 0px;
 	    border-radius: 5px;
-	    background-color: #F5FFFF;
+	    background-color: #d8dee9;
 	}
 	#language {
 	    font-weight: bold;
