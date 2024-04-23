@@ -35,6 +35,7 @@ mv ~/dot-nix-amoled/Downloads/jord.jpg ~/Downloads
 ```
 
 btw,
+
 Downloads -> wallpapers
 
 chrome -> firefox
