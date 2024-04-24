@@ -45,3 +45,5 @@ hypr -> hyprland
 nixos -> nixos
 
 gtktheme.json -> gtk theme for gradience
+
+discord.css -> discord amoled theme
