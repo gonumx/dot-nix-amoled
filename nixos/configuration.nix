@@ -70,23 +70,16 @@
     #LC_TIME = "el_GR.UTF-8";
   };
 
-  # Enable systemd services
-  systemd = {
-    network.enable = true;
-  };
-
   # Enable OpenGL
-  hardware.opengl = {
+  hardware.graphics = {
     enable = true;
-    driSupport = true;
-    driSupport32Bit = true;
   };
 
   # Load nvidia driver for Xorg and Wayland
   services = {
     xserver = {
       enable = true;
-      layout = "us";
+      xkb.layout = "us";
       displayManager.xpra.pulseaudio = true;
       videoDrivers = [ "nvidia" ];
       windowManager.i3 = {
@@ -162,8 +155,8 @@
   security.sudo.wheelNeedsPassword = false;
 
   # Enable automatic login for the user.
-  services.xserver.displayManager.autoLogin.enable = true;
-  services.xserver.displayManager.autoLogin.user = "bill";
+  services.displayManager.autoLogin.enable = true;
+  services.displayManager.autoLogin.user = "bill";
 
   # Workaround for GNOME autologin: https://github.com/NixOS/nixpkgs/issues/103746#issuecomment-945091229
   systemd.services."getty@tty1".enable = false;
@@ -181,6 +174,16 @@
   environment.systemPackages = with pkgs; [
     home-manager
   # apps
+    popsicle
+    rm-improved
+    steam-tui
+    dolphin
+    nautilus
+    font-manager
+    gnome-font-viewer
+    prismlauncher
+    hyprpicker
+    firefox
     alsa-utils
     teams-for-linux
     armcord
@@ -194,7 +197,6 @@
     vim
     google-chrome
     chromium
-    firefox
     pavucontrol
     pamixer
     xdg-desktop-portal-hyprland
@@ -203,16 +205,16 @@
     satty
     grim
     slurp
-    satty
     libnotify
     flatpak
     btop
     wl-clipboard
     fzf
     eza
+    zoxide
     steam
     qpwgraph
-    webcord
+    vesktop
     xorg.xinit
     xorg.xauth
     r2modman
@@ -236,9 +238,8 @@
     skypeforlinux
     wl-color-picker
     libjpeg
-    minecraft
     loupe
-    gnome.gnome-tweaks
+    gnome-tweaks
     libadwaita
     bottles
     fragments
@@ -248,15 +249,23 @@
     gradience
     wpsoffice 
     cliphist
-    quickgui
-    quickemu
-    qemu
     virt-manager
   ];
 
   # Programs
+  nixpkgs.overlays =
+    let
+      # Change this to a rev sha to pin
+      moz-rev = "master";
+      moz-url = builtins.fetchTarball { url = "https://github.com/mozilla/nixpkgs-mozilla/archive/${moz-rev}.tar.gz";};
+      nightlyOverlay = (import "${moz-url}/firefox-overlay.nix");
+    in [
+      nightlyOverlay
+    ];
   programs = {
+    firefox.package = pkgs.latest.firefox-nightly-bin;
     hyprland.enable = true;
+    steam.enable = true;
     bash = {
       blesh.enable = true;
       shellAliases = {
@@ -264,7 +273,7 @@
 	ls="eza -s size -a --icons=always --hyperlink";
         mv="mv -v";
 	cp="cp -vr";
-	rm="rm -vrf";
+	rm="rip";
         v="vim";
 	vhypr="vim ~/.config/hypr/hyprland.conf";
 	vnix="sudo vim /etc/nixos/configuration.nix";
@@ -293,7 +302,7 @@
     services = {
       mako = {
 	enable = true;
-	font = "JetBrainsMono";
+	font = "Fantasque Sans Mono";
 	width = 400;
 	height = 80;
 	margin = "15";
@@ -306,7 +315,7 @@
 	anchor = "top-right";
 	
 	backgroundColor = "#000000";
-	textColor = "#d8dee9";
+	textColor = "#f5ffff";
 	borderColor = "#555555";
         defaultTimeout = 4000;
 	progressColor = "over #433E4A";	
@@ -427,7 +436,7 @@
 	}
 	button {
 	    box-shadow: inset 0 -3px transparent;
-	    border: #d8dee9;
+	    border: #D8DEE9;
 	    border-radius: 4px;
 	}
 	button:hover {
@@ -437,7 +446,7 @@
 	#workspaces button {
 	    padding: 0 5px;
 	    background-color: transparent;
-	    color: #d8dee9;
+	    color: #D8DEE9;
 	}
 	#workspaces button:hover {
 	    background: rgba(0, 0, 0, 0.2);
@@ -596,7 +605,7 @@
       enable = true;
       cursorTheme.package = pkgs.bibata-cursors;
       cursorTheme.name = "Bibata-Modern-Classic";
-      cursorTheme.size = 16;
+      cursorTheme.size = 21;
       iconTheme.package = pkgs.morewaita-icon-theme;
       iconTheme.name = "MoreWaita";
       gtk4.extraConfig = { gtk-application-prefer-dark-theme = 1; };
