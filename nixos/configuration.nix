@@ -24,7 +24,7 @@
     '';
   };
 
-  networking.hostName = "nixos"; # Define your hostname.
+  networking.hostName = "vostro"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
 
   # Configure network proxy if necessary
@@ -121,7 +121,7 @@
   };
 
   # Enable CUPS to print documents.
-  services.printing.enable = true;
+  services.printing.enable = false;
   services.avahi = {
     enable = true;
     nssmdns4 = true;
@@ -134,7 +134,7 @@
   services.pipewire = {
     enable = true;
     alsa.enable = true;
-    alsa.support32Bit = false;
+    alsa.support32Bit = true;
     pulse.enable = true;
     wireplumber.enable = true;
   };
@@ -143,7 +143,7 @@
   # services.xserver.libinput.enable = true;
 
   # Define a user account. Don't forget to set a password with ‘passwd’.
-  users.defaultUserShell = pkgs.bash;
+  users.defaultUserShell = pkgs.fish;
   users.users.bill = {
     isNormalUser = true;
     description = "bill";
@@ -153,6 +153,14 @@
     ];
   };
   security.sudo.wheelNeedsPassword = false;
+  # Run gpu-screen-recorder without root privilages.
+  environment.etc."polkit-1/rules.d/99-no-password.rules".text = ''
+    polkit.addRule(function(action, subject) {
+        if (action.id == "org.freedesktop.policykit.exec" && subject.isInGroup("bill")) {
+            return polkit.Result.YES;
+        }
+    });
+  '';
 
   # Enable automatic login for the user.
   services.displayManager.autoLogin.enable = true;
@@ -164,9 +172,14 @@
 
   # List fonts installed in system profile
   fonts.packages = with pkgs; [
-    nerdfonts
+    fantasque-sans-mono #i love it
+    material-design-icons
+    hack-font
+    font-awesome
+    jetbrains-mono
+    victor-mono
     roboto
-    fantasque-sans-mono
+    noto-fonts-cjk-sans
   ];
 
   # List packages installed in system profile. To search, run:
@@ -174,10 +187,26 @@
   environment.systemPackages = with pkgs; [
     home-manager
   # apps
+    outils
+    unipicker
+    zoom-us
+    viber
+    xautoclick
+    woeusb
+    wacomtablet
+    libwacom
+    libwacom-surface
+    gpu-screen-recorder
+    shotwell
+    autokey
+    swappy
+    webcamoid
+    papers
+    ytfzf
+    nnn
+    ffmpeg
     popsicle
     rm-improved
-    steam-tui
-    dolphin
     nautilus
     font-manager
     gnome-font-viewer
@@ -185,24 +214,17 @@
     hyprpicker
     firefox
     alsa-utils
-    teams-for-linux
-    armcord
     libqalculate
     docker
-    gnome.polari
     wget
-    lunar-client
     git
     hyprshot
-    vim
-    google-chrome
     chromium
     pavucontrol
     pamixer
     xdg-desktop-portal-hyprland
     waybar
     swaybg
-    satty
     grim
     slurp
     libnotify
@@ -211,14 +233,13 @@
     wl-clipboard
     fzf
     eza
-    zoxide
     steam
     qpwgraph
     vesktop
     xorg.xinit
     xorg.xauth
     r2modman
-    neofetch
+    fastfetch
     xwaylandvideobridge
     mpv
     meslo-lgs-nf
@@ -226,7 +247,7 @@
     xarchiver
     starship
     blesh
-    gnome.quadrapassel
+    quadrapassel
     killall
     gimp
     fuzzel 
@@ -240,56 +261,64 @@
     libjpeg
     loupe
     gnome-tweaks
+    xaos
+    tty-clock
     libadwaita
-    bottles
+    adw-gtk3
     fragments
-    celluloid
     graphs
-    escrotum
     gradience
     wpsoffice 
     cliphist
     virt-manager
+    vim
   ];
 
   # Programs
-  nixpkgs.overlays =
-    let
-      # Change this to a rev sha to pin
-      moz-rev = "master";
-      moz-url = builtins.fetchTarball { url = "https://github.com/mozilla/nixpkgs-mozilla/archive/${moz-rev}.tar.gz";};
-      nightlyOverlay = (import "${moz-url}/firefox-overlay.nix");
-    in [
-      nightlyOverlay
-    ];
   programs = {
     firefox.package = pkgs.latest.firefox-nightly-bin;
     hyprland.enable = true;
     steam.enable = true;
-    bash = {
-      blesh.enable = true;
-      shellAliases = {
-        grep = "grep --color=auto";
-	ls="eza -s size -a --icons=always --hyperlink";
-        mv="mv -v";
-	cp="cp -vr";
-	rm="rip";
+    fish = {
+      enable = true;
+      useBabelfish = true;
+      shellAbbrs = {
         v="vim";
 	vhypr="vim ~/.config/hypr/hyprland.conf";
 	vnix="sudo vim /etc/nixos/configuration.nix";
 	vnixh="sudo vim /etc/nixos/hardware-configuration.nix";
 	nixr="sudo nixos-rebuild switch";
-	vflake="vim ~/flake.nix";
 	rst="sudo alsactl restore && sudo alsactl store";
-        #vhome="vim ~/.config/home-manager/home.nix";
-        #homer="home-manager switch";
         hypr="Hyprland";
       };
+      shellAliases = {
+        grep = "grep --color=auto";
+	ls="eza -s size -a --icons=always --hyperlink";
+        mv="mv -v";
+	cp="cp -vr";
+	rm="rip"; 
+        unipicker="unipicker | wl-copy";
+      };
+      shellInit = ''
+        starship init fish | source
+        function fish_greeting
+          echo ""
+	  fastfetch
+	end
+      '';
     };
-
     starship = {
       enable = true;
       presets = [ "nerd-font-symbols" "pure-preset" ];
+    };
+    bash = {
+      interactiveShellInit = ''
+        if [[ $(${pkgs.procps}/bin/ps --no-header --pid=$PPID --format=comm) != "fish" && -z ''${BASH_EXECUTION_STRING} ]]
+        then
+          shopt -q login_shell && LOGIN_OPTION='--login' || LOGIN_OPTION=""
+          exec ${pkgs.fish}/bin/fish $LOGIN_OPTION
+        fi
+      '';
     };
   };
 
@@ -313,7 +342,6 @@
 	maxVisible = 10;
 	layer = "overlay";
 	anchor = "top-right";
-	
 	backgroundColor = "#000000";
 	textColor = "#f5ffff";
 	borderColor = "#555555";
@@ -387,7 +415,6 @@
       '';
      };
 
-
     programs.wlogout = {
       enable = true;
       layout = [
@@ -422,7 +449,7 @@
 	* {
 	    font-family: Fantasque Sans Mono;
 	    font-size: 16px;
-	    border-radius: 10px;
+	    border-radius: 15px;
 	}
 	window#waybar {
 	    background-color: rgba(43, 48, 59, 0.0);
@@ -514,7 +541,7 @@
 	    background-color: #d8dee9;
 	}
 	#language {
-	    font-weight: bold;
+            font-size: 23px;
 	}
       '';
       # Configuring Waybar
@@ -545,13 +572,13 @@
 	  "spacing" = 10;
 	};
 	"clock" = {
-	  "format" = "{:%I:%M 󰸗  %p %b %d}";
+	  "format" = "{:%I:%M %p 󰸗  %b %d}";
           "tooltip" = true;
           "tooltip-format"= "<tt>{calendar}</tt>";
 	};
 	"pulseaudio" = {
           "scroll-step" = 1;
-          "format" = "{volume}% {icon}  {format_source}";
+          "format" = "{volume}% {icon} {format_source}";
           "format-bluetooth" = "{volume}% {icon} {format_source}";
           "format-bluetooth-muted" = "󰖁 {icon} {format_source}";
           "format-muted" = "󰖁 {format_source}";
@@ -574,13 +601,13 @@
 	};
         "memory" = {
           "interval" = 1;
-          "format" = "{percentage}% 󰐿 ";
+          "format" = "{percentage}% 󰐿";
           "states" = {
-            "warning" = 85;
+          "warning" = 85;
           };
         };
 	"disk" = {
-	  "format" = "{free} 󰋊 ";
+	  "format" = "{used} 󰋊";
 	};
 	"hyprland/workspaces" = {
 	  "all-outputs" = true;
@@ -595,8 +622,8 @@
 	  };
 	};
 	"hyprland/language" = {
-	  "format-en" = "e";
-	  "format-gr" = "ε";
+	  "format-en" = "󱌯";
+	  "format-gr" = "󱌮";
 	};
       }];
     };
