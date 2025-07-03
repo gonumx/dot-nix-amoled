@@ -1,4 +1,5 @@
-{ config, pkgs, ... }:
+{ config, pkgs, lib, ... }:
+
 {
   imports =
     [ # Include the results of the hardware scan.
@@ -83,16 +84,13 @@
       displayManager.xpra.pulseaudio = true;
       videoDrivers = [ "nvidia" ];
       windowManager.i3 = {
-	enable = true;
+	enable = false;
 	extraPackages = with pkgs; [
 	  dmenu
 	  i3status
 	  i3blocks
 	];
       };
-      desktopManager.gnome.enable = false;
-      displayManager.gdm.enable = true;
-      displayManager.startx.enable = true;
       config = ''
         Section "Device"
             Identifier "nvidia"
@@ -108,6 +106,7 @@
       '';
     };
     flatpak.enable = true;
+    gvfs.enable = true;
   };
 
   hardware.nvidia = {
@@ -129,7 +128,7 @@
   };
 
   # Enable sound with pipewire.
-  hardware.pulseaudio.enable = false;
+  services.pulseaudio.enable = false;
   security.rtkit.enable = true;
   services.pipewire = {
     enable = true;
@@ -144,9 +143,9 @@
 
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.defaultUserShell = pkgs.fish;
-  users.users.bill = {
+  users.users.b = {
     isNormalUser = true;
-    description = "bill";
+    description = "b";
     extraGroups = [ "networkmanager" "wheel" ];
     useDefaultShell = true;
     packages = with pkgs; [
@@ -156,7 +155,7 @@
   # Run gpu-screen-recorder without root privilages.
   environment.etc."polkit-1/rules.d/99-no-password.rules".text = ''
     polkit.addRule(function(action, subject) {
-        if (action.id == "org.freedesktop.policykit.exec" && subject.isInGroup("bill")) {
+        if (action.id == "org.freedesktop.policykit.exec" && subject.isInGroup("b")) {
             return polkit.Result.YES;
         }
     });
@@ -164,7 +163,7 @@
 
   # Enable automatic login for the user.
   services.displayManager.autoLogin.enable = true;
-  services.displayManager.autoLogin.user = "bill";
+  services.displayManager.autoLogin.user = "b";
 
   # Workaround for GNOME autologin: https://github.com/NixOS/nixpkgs/issues/103746#issuecomment-945091229
   systemd.services."getty@tty1".enable = false;
@@ -187,18 +186,20 @@
   environment.systemPackages = with pkgs; [
     home-manager
   # apps
-    outils
+    mako
+    zulu24
+    unzip
+    ryubing
+    tofi
+    google-chrome
+    kickoff
+    clipse
+    gpu-screen-recorder
     unipicker
     zoom-us
-    viber
     xautoclick
-    woeusb
-    wacomtablet
-    libwacom
-    libwacom-surface
     gpu-screen-recorder
     shotwell
-    autokey
     swappy
     webcamoid
     papers
@@ -219,7 +220,6 @@
     wget
     git
     hyprshot
-    chromium
     pavucontrol
     pamixer
     xdg-desktop-portal-hyprland
@@ -234,29 +234,22 @@
     fzf
     eza
     steam
-    qpwgraph
     vesktop
-    xorg.xinit
-    xorg.xauth
     r2modman
     fastfetch
-    xwaylandvideobridge
+    kdePackages.xwaylandvideobridge
     mpv
     meslo-lgs-nf
     cava
     xarchiver
     starship
     blesh
-    quadrapassel
     killall
     gimp
     fuzzel 
     wlogout
-    pmutils
-    molly-guard
     flatpak
     pulsemixer
-    skypeforlinux
     wl-color-picker
     libjpeg
     loupe
@@ -313,58 +306,66 @@
     };
     bash = {
       interactiveShellInit = ''
-        if [[ $(${pkgs.procps}/bin/ps --no-header --pid=$PPID --format=comm) != "fish" && -z ''${BASH_EXECUTION_STRING} ]]
-        then
-          shopt -q login_shell && LOGIN_OPTION='--login' || LOGIN_OPTION=""
-          exec ${pkgs.fish}/bin/fish $LOGIN_OPTION
-        fi
+	fish
       '';
     };
   };
 
 
   # Home Manager
-  home-manager.users.bill = { pkgs, ... }: {
+  home-manager.users.b = { pkgs, ... }: {
     home.packages = [
     ]; # Color accent = #F5FFFF
 
     services = {
       mako = {
 	enable = true;
-	font = "Fantasque Sans Mono";
-	width = 400;
-	height = 80;
-	margin = "15";
-	padding = "15";
-	borderSize = 1;
-	borderRadius = 15;
-	maxIconSize = 48;
-	maxVisible = 10;
-	layer = "overlay";
-	anchor = "top-right";
-	backgroundColor = "#000000";
-	textColor = "#f5ffff";
-	borderColor = "#555555";
-        defaultTimeout = 4000;
-	progressColor = "over #433E4A";	
-      };
+	settings = {
+  	  font = "Fantasque Sans Mono";
+  	  width = 400;
+  	  height = 80;
+  	  margin = "15";
+  	  padding = "15";
+  	  border-size = 1;
+  	  border-radius = 15;
+  	  max-visible = 10;
+  	  layer = "overlay";
+  	  anchor = "top-right";
+  	  background-color = "#000000";
+  	  text-color = "#d8dee9";
+  	  border-color = "#55555580";
+          default-timeout = 4000;
+  	  progress-color = "over #433E4A";	
+        };
+      }; 
     };
 
-    programs.fuzzel = {
+    programs.tofi = {
       enable = true;
       settings = {
-	colors.background = "#000000ff";
-	colors.text = "#d8dee9ff";
-	colors.selection-text = "#000000ff";
-	colors.selection-match = "#d8dee9ff";
-	colors.match = "#d8dee9ff";
-	colors.selection = "#d8dee9ff";
-	colors.border = "#555555ff";
-	border.radius = 10;
-	border.width = 2;
-        main.width = 60;
-	main.font = "Fantasque Sans Mono:size=21";
-	main.prompt = "❯ ";
+	font = "Fantasque Sans Mono";
+	font-size = 12;
+
+	horizontal = true;
+	anchor = "top";
+	width = "70%";
+	height = 48;
+	outline-width = 0;
+	border-width = 0;
+	result-spacing = 30;
+	padding-top = 12;
+	padding-bottom = 8;
+	padding-left = 600;
+	padding-right = 0;
+	prompt-text = "drun: ";
+	prompt-padding = 10;
+
+	prompt-color = "#be95ff";
+	background-color = "#00000000";
+	text-color = "#d8dee9";
+	input-color = "#33b1ff";
+	selection-color = "#ff7eb6";
+	selection-match-color = "#42be65";
       };
     };
 
@@ -380,38 +381,55 @@
         confirm_os_window_close  = 0;
       };
       extraConfig = ''
-        foreground              #D8DEE9
-        background              #000000
-        selection_foreground    #D9E0EE
-        selection_background    #262626
-        
-        cursor                  #D8DEE9
-        cursor_text_color       #000000
-        
-        #: black
-        color0 #262626
-        color8 #262626
-        #: red
-        color1 #E97193
-        color9 #E97193
-        #: green
-        color2  #AAC5A0
-        color10 #AAC5A0
-        #: yellow
-        color3  #ECE0A8
-        color11 #ECE0A8
-        #: blue
-        color4  #78afe3
-        color12 #78afe3
-        #: magenta
-        color5  #DFA7E7
-        color13 #DFA7E7
-        #: cyan
-        color6  #A8E5E6
-        color14 #A8E5E6
-        #: white
-        color7  #D8DEE9
-        color15 #D8DEE9
+	foreground #d8dee9
+	background #000000
+	selection_foreground #f2f4f8
+	selection_background #525252
+	
+	cursor #f2f4f8
+	cursor_text_color #393939
+	
+	url_color #ee5396
+	url_style single
+	
+	active_border_color #ee5396
+	inactive_border_color #ff7eb6
+	
+	bell_border_color #ee5396
+	
+	wayland_titlebar_color system
+	macos_titlebar_color system
+	
+	active_tab_foreground #161616
+	active_tab_background #ee5396
+	inactive_tab_foreground #dde1e6
+	inactive_tab_background #393939
+	tab_bar_background #161616
+	
+	#black
+	color0 #262626
+	color8 #393939
+	#pink
+	color1 #ff7eb6
+	color9 #ff7eb6
+	#green
+	color2  #42be65
+	color10 #42be65
+	#cyan
+	color3  #82cfff
+	color11 #82cfff
+	#blue
+	color4  #33b1ff
+	color12 #33b1ff
+	#purple
+	color5  #be95ff
+	color13 #be95ff
+	#cyan
+	color6  #82cfff
+	color14 #82cfff
+	#white
+	color7  #d8dee9
+	color15 #ffffff
       '';
      };
 
@@ -502,6 +520,7 @@
 	#scratchpad,
 	#pulseaudio-slider,
 	#language,
+	#cava,
 	#mpd {
 	    padding: 0 10px;
 	    color: #d8dee9;
@@ -548,7 +567,7 @@
       settings = [{
         "layer" = "top";
         "position" = "top";
-	"height" = 24;
+	"height" = 26;
 	"margin-top" = 8;
 	"margin-left" = 15;
 	"margin-right" = 15;
@@ -578,12 +597,12 @@
 	};
 	"pulseaudio" = {
           "scroll-step" = 1;
-          "format" = "{volume}% {icon} {format_source}";
-          "format-bluetooth" = "{volume}% {icon} {format_source}";
-          "format-bluetooth-muted" = "󰖁 {icon} {format_source}";
-          "format-muted" = "󰖁 {format_source}";
-          "format-source" = "{volume}%  ";
-          "format-source-muted" = " ";
+          "format" = "<span color='#ff7eb6' >{icon}</span> {volume}% {format_source}";
+          "format-bluetooth" = "<span color='#ff7eb6' >{icon}󰂯</span> {volume}% {format_source}";
+          "format-bluetooth-muted" = "<span color='#ff7eb6' >󰖁</span> {format_source}";
+          "format-muted" = "<span color='#ff7eb6' >󰖁</span> {format_source}";
+          "format-source" = "<span color='#be95ff' ></span> {volume}%";
+          "format-source-muted" = "<span color='#be95ff' ></span>";
           "format-icons" = {
               "headphone" = "󰋋";
               "hands-free" = "";
@@ -601,13 +620,13 @@
 	};
         "memory" = {
           "interval" = 1;
-          "format" = "{percentage}% 󰐿";
+          "format" = "<span color='#42be65' >󰐿</span> {percentage}%";
           "states" = {
           "warning" = 85;
           };
         };
 	"disk" = {
-	  "format" = "{used} 󰋊";
+	  "format" = "<span color='#33b1ff' >󰋊</span> {used}";
 	};
 	"hyprland/workspaces" = {
 	  "all-outputs" = true;
@@ -622,8 +641,8 @@
 	  };
 	};
 	"hyprland/language" = {
-	  "format-en" = "󱌯";
-	  "format-gr" = "󱌮";
+	  "format-en" = "<span color='#82cfff' >e</span>";
+	  "format-gr" = "<span color='#82cfff' >ε</span>";
 	};
       }];
     };
@@ -639,58 +658,58 @@
       gtk3.extraConfig = { gtk-application-prefer-dark-theme = 1; };
     };
 
-    xsession.windowManager.i3 = {
-      enable = true;
-      package = pkgs.i3-gaps;
-      config = rec {
-        modifier = "Mod4";
-        window.border = 0;
-        gaps = {
-          inner = 0;
-          outer = 0;
-        };
-        keybindings = {
-          "XF86AudioLowerVolume" = "exec kitty -e alsamixer";
-          "XF86AudioRaiseVolume" = "exec kitty -e alsamixer";
-          "${modifier}+Return" = "exec kitty";
-          "${modifier}+w" = "exec google-chrome-stable";
-          "${modifier}+z" = "kill";
-          "${modifier}+q" = "exec --no-startup-id dmenu_run";
-          "${modifier}+f" = "fullscreen";
-          "${modifier}+m" = "exit i3";
-          "${modifier}+s" = "exec escrotum -C && notify-send screenie!";
-          "${modifier}+k" = "exec killall vinegar";
-
-          "${modifier}+1" = "workspace 1";
-          "${modifier}+2" = "workspace 2";
-          "${modifier}+3" = "workspace 3";
-          "${modifier}+4" = "workspace 4";
-          "${modifier}+5" = "workspace 5";
-          "${modifier}+6" = "workspace 6";
-          "${modifier}+7" = "workspace 7";
-          "${modifier}+8" = "workspace 8";
-          "${modifier}+9" = "workspace 9";
-          "${modifier}+0" = "workspace 10";
-          "${modifier}+Shift+1" = "move container to workspace 1";
-          "${modifier}+Shift+2" = "move container to workspace 2";
-          "${modifier}+Shift+3" = "move container to workspace 3";
-          "${modifier}+Shift+4" = "move container to workspace 4";
-          "${modifier}+Shift+5" = "move container to workspace 5";
-          "${modifier}+Shift+6" = "move container to workspace 6";
-          "${modifier}+Shift+7" = "move container to workspace 7";
-          "${modifier}+Shift+8" = "move container to workspace 8";
-          "${modifier}+Shift+9" = "move container to workspace 9";
-          "${modifier}+Shift+0" = "move container to workspace 10";
-        };
-	startup = [
-          {
-            command = "xinit set-prop 10 296 -0.4";
-            always = true;
-            notification = false;
-          }
-        ];
-      };
-    };
+#    xsession.windowManager.i3 = {
+#      enable = false;
+#      package = pkgs.i3-gaps;
+#      config = rec {
+#        modifier = "Mod4";
+#        window.border = 0;
+#        gaps = {
+#          inner = 0;
+#          outer = 0;
+#        };
+#        keybindings = {
+#          "XF86AudioLowerVolume" = "exec kitty -e alsamixer";
+#          "XF86AudioRaiseVolume" = "exec kitty -e alsamixer";
+#          "${modifier}+Return" = "exec kitty";
+#          "${modifier}+w" = "exec google-chrome-stable";
+#          "${modifier}+z" = "kill";
+#          "${modifier}+q" = "exec --no-startup-id dmenu_run";
+#          "${modifier}+f" = "fullscreen";
+#          "${modifier}+m" = "exit i3";
+#          "${modifier}+s" = "exec escrotum -C && notify-send screenie!";
+#          "${modifier}+k" = "exec killall vinegar";
+#
+#          "${modifier}+1" = "workspace 1";
+#          "${modifier}+2" = "workspace 2";
+#          "${modifier}+3" = "workspace 3";
+#          "${modifier}+4" = "workspace 4";
+#          "${modifier}+5" = "workspace 5";
+#          "${modifier}+6" = "workspace 6";
+#          "${modifier}+7" = "workspace 7";
+#          "${modifier}+8" = "workspace 8";
+#          "${modifier}+9" = "workspace 9";
+#          "${modifier}+0" = "workspace 10";
+#          "${modifier}+Shift+1" = "move container to workspace 1";
+#          "${modifier}+Shift+2" = "move container to workspace 2";
+#          "${modifier}+Shift+3" = "move container to workspace 3";
+#          "${modifier}+Shift+4" = "move container to workspace 4";
+#          "${modifier}+Shift+5" = "move container to workspace 5";
+#          "${modifier}+Shift+6" = "move container to workspace 6";
+#          "${modifier}+Shift+7" = "move container to workspace 7";
+#          "${modifier}+Shift+8" = "move container to workspace 8";
+#          "${modifier}+Shift+9" = "move container to workspace 9";
+#          "${modifier}+Shift+0" = "move container to workspace 10";
+#        };
+#	startup = [
+#          {
+#            command = "xinit set-prop 10 296 -0.4";
+#            always = true;
+#            notification = false;
+#          }
+#        ];
+#      };
+#    };
 
     home.stateVersion = "23.11";
   };
